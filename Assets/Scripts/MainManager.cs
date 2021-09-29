@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -18,7 +20,18 @@ public class MainManager : MonoBehaviour
     
     private bool m_GameOver = false;
 
-    
+    public string c_playerName;
+    public string h_playerName;
+    public int h_highScore;    
+
+
+    private void Awake()
+    {
+        c_playerName = MenuManager.instance.c_playerName;
+        h_playerName = MenuManager.instance.h_playerName;
+        h_highScore = MenuManager.instance.h_highScore;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -36,6 +49,7 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+        BestScoreText.text = "Best Score: " + $"{h_playerName}: {h_highScore}";
     }
 
     private void Update()
@@ -57,6 +71,7 @@ public class MainManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                MenuManager.instance.LoadHighScore();
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
@@ -72,5 +87,20 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        if (m_Points > h_highScore)
+        {
+            SaveHighScore();
+        }
+    }
+
+    public void SaveHighScore()
+    {
+        MenuManager.PlayerHighScore playerHigh = new MenuManager.PlayerHighScore
+        {
+            scoreName = c_playerName,
+            score = m_Points
+        };
+        string json = JsonUtility.ToJson(playerHigh);
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
     }
 }
